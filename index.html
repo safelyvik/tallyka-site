@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AussieLog — The Frictionless ATO Vehicle Logbook</title>
+<meta name="description" content="AussieLog helps Australian sole traders, tradies and contractors keep the kilometre records the ATO expects — swipe to categorise trips, generate reports, and estimate your deduction." />
+<meta property="og:title" content="AussieLog — The Frictionless ATO Vehicle Logbook" />
+<meta property="og:description" content="Swipe to categorise trips. Auto-generate record-keeping reports. From $6.99/month." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="icon.png" />
+<link rel="icon" type="image/png" href="icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #DDDDD5;
+    --bg-alt: #E4E3DD;
+    --card: #E8E8E2;
+    --border: #C0C0B7;
+    --muted: #635F57;
+    --fg: #080807;
+    --primary: #080807;
+    --primary-hover: #2a2a27;
+    --destructive: #A6342A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 0 24px; }
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(221, 221, 213, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px; letter-spacing: -0.01em; font-family: 'Space Grotesk', sans-serif; }
+  .brand img { width: 26px; height: 26px; border-radius: 7px; }
+  .nav-link { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .nav-link:hover { color: var(--fg); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--fg);
+    margin-bottom: 20px;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+
+  h1 { font-size: 38px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  h1 span { color: var(--fg); }
+  .lead { font-size: 17px; color: var(--muted); line-height: 1.6; margin: 0 0 28px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 16px; border-radius: 12px; font-weight: 600; font-size: 15px;
+    text-decoration: none; border: none; cursor: pointer;
+  }
+  .btn-primary { background: var(--primary); color: var(--card); }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .fine { text-align: center; font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+  section { padding: 64px 0 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+  }
+  .demo-card { position: relative; }
+  .demo-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+  .demo-time { font-size: 12px; color: var(--muted); margin: 0 0 2px; }
+  .demo-route { font-weight: 600; margin: 0; }
+  .pill { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--fg); white-space: nowrap; }
+  .demo-meta { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 16px; flex-wrap: wrap; }
+  .demo-meta .accent { color: var(--fg); font-weight: 600; }
+  .swipe-row { display: flex; gap: 8px; }
+  .swipe-btn { flex: 1; text-align: center; border-radius: 10px; padding: 9px; font-size: 12px; font-weight: 700; }
+  .swipe-personal { background: var(--bg); border: 1px solid var(--border); color: var(--destructive); }
+  .swipe-business { background: var(--bg); border: 1px solid var(--border); color: var(--fg); }
+  .swipe-hint { text-align: center; font-size: 12px; color: var(--muted); margin: 12px 0 0; }
+
+  h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  .feature-grid { display: grid; gap: 12px; }
+  .feature { display: flex; gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .feature .icon { width: 44px; height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .feature .title { font-weight: 600; font-size: 14px; margin: 0 0 3px; }
+  .feature .desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0; }
+
+  .pricing { text-align: center; }
+  .pricing-intro { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 18px; }
+  .plan {
+    text-align: left; border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; margin: 0 0 12px; background: var(--bg);
+  }
+  .plan-primary { border: 2px solid var(--fg); background: var(--card); }
+  .plan-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .plan-name { font-weight: 700; font-size: 14px; margin: 0; }
+  .plan-badge {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    background: var(--fg); color: var(--card); border-radius: 999px; padding: 3px 8px; white-space: nowrap;
+  }
+  .price-row { display: flex; align-items: flex-end; gap: 4px; margin: 6px 0 8px; }
+  .price { font-size: 36px; font-weight: 700; line-height: 1; font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+  .plan-primary .price { font-size: 42px; }
+  .price-sub { color: var(--muted); font-size: 13px; padding-bottom: 4px; }
+  .plan-for { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0 0 10px; }
+  .plan-for strong { color: var(--fg); font-weight: 600; }
+  .price-note { color: var(--muted); font-size: 12px; margin: 8px 0 18px; }
+  ul.checklist { list-style: none; padding: 0; margin: 0; text-align: left; }
+  ul.checklist li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; padding: 5px 0; color: var(--muted); }
+  .plan-primary ul.checklist li { color: var(--fg); }
+  ul.checklist li::before { content: "✓"; color: var(--fg); font-weight: 800; flex-shrink: 0; }
+
+  .stores { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; align-items: center; }
+  .store-badge { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+  .store-badge .badge-soon { font-size: 10px; color: var(--muted); }
+  .store-badge img { height: 40px; display: block; opacity: 0.7; }
+  .gplay-badge { display: inline-flex; align-items: center; gap: 10px; background: #000; border-radius: 8px; padding: 8px 14px; height: 40px; box-sizing: border-box; opacity: 0.7; }
+  .gplay-badge img { height: 22px; width: auto; }
+  .gplay-badge .gplay-text { text-align: left; line-height: 1.2; }
+  .gplay-badge .gplay-sub { font-size: 9px; color: #ccc; display: block; }
+  .gplay-badge .gplay-name { font-size: 14px; font-weight: 600; color: #fff; display: block; }
+
+  footer { padding: 56px 0 40px; text-align: center; }
+  .footer-brand { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; font-weight: 700; font-size: 14px; font-family: 'Space Grotesk', sans-serif; }
+  .footer-brand img { width: 22px; height: 22px; border-radius: 6px; }
+  .footer-links { display: flex; gap: 16px; justify-content: center; margin: 14px 0; }
+  .footer-links a { color: var(--muted); font-size: 13px; text-decoration: none; }
+  .footer-links a:hover { color: var(--fg); }
+  .footer-note { font-size: 12px; color: var(--muted); line-height: 1.6; max-width: 360px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><img src="icon.png" alt="AussieLog" /> AussieLog</div>
+    <a class="nav-link" href="mailto:aussielog.info@gmail.com?subject=AussieLog">Contact</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <section style="padding-top:48px;">
+    <span class="badge"><span class="dot"></span> ATO Vehicle Logbook Records</span>
+    <h1>Your vehicle logbook,<br><span>finally sorted.</span></h1>
+    <p class="lead">Track each trip, swipe to categorise, and get the kilometre records the ATO expects every tax time — the cents-per-km method made effortless. From $6.99/month.</p>
+    <a class="btn btn-primary" href="mailto:aussielog.info@gmail.com?subject=Notify%20me%20when%20AussieLog%20launches">Get notified at launch →</a>
+    <p class="fine">Launching on iOS &amp; Android. Tax-deductible. Cancel any time.</p>
+  </section>
+
+  <section>
+    <div class="card demo-card">
+      <div class="demo-row">
+        <div>
+          <p class="demo-time">Today, 9:14 AM</p>
+          <p class="demo-route">Bondi Beach → CBD</p>
+        </div>
+        <div class="pill">12.4 km</div>
+      </div>
+      <div class="demo-meta">
+        <span>Sydney NSW</span><span>·</span><span>18 min</span><span>·</span><span class="accent">$10.91 deductible</span>
+      </div>
+      <div class="swipe-row">
+        <div class="swipe-btn swipe-personal">Personal</div>
+        <div class="swipe-btn swipe-business">Business</div>
+      </div>
+    </div>
+    <p class="swipe-hint">Swipe right for business, left for personal</p>
+  </section>
+
+  <section>
+    <h2>Built for Australian sole traders</h2>
+    <p class="sub">Tools for your logbook and cents-per-km records — you stay in control of accuracy.</p>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>
+        <div><p class="title">88c/km deduction calculator</p><p class="desc">Estimate your claim under the ATO cents-per-kilometre method — the record you need every year, capped at 5,000 business km.</p></div>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/></svg></div>
+        <div><p class="title">12-week ATO logbook</p><p class="desc">Tracks your continuous 12-week logbook period with real-time progress, valid for 5 years once established.</p></div>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></div>
+        <div><p class="title">Simple trip tracking</p><p class="desc">Start and end each trip in one tap. Distance is calculated on your device — your detailed location never leaves your phone.</p></div>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>
+        <div><p class="title">Reports for your accountant</p><p class="desc">Generate a financial-year summary of business kilometres and your estimated deduction.</p></div>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg></div>
+        <div><p class="title">Business purpose prompts</p><p class="desc">Prompts you to record a specific work reason on business trips. You decide what to enter; you remain responsible for whether it is adequate for your claim.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card pricing">
+      <p class="sub" style="margin-bottom:6px;">Pricing</p>
+      <h2 style="font-size:22px;margin-bottom:8px;">Pick the plan that matches your claim</h2>
+      <p class="pricing-intro">Monthly and Yearly are the full app (year-round tracking <strong>and</strong> 12-week logbook). Logbook Pass is only for a one-off 12-week logbook — not a year of AussieLog.</p>
+
+      <div class="plan plan-primary">
+        <div class="plan-head">
+          <p class="plan-name">Yearly</p>
+          <span class="plan-badge">Best value</span>
+        </div>
+        <div class="price-row"><span class="price">$69.99</span><span class="price-sub">/year</span></div>
+        <p class="plan-for"><strong>Save ~$14 vs monthly</strong> (about 2 months free). Full AussieLog for the tax year — cents-per-km all year, plus the 12-week logbook if you need it.</p>
+        <ul class="checklist">
+          <li>Everything in Monthly</li>
+          <li>Unlimited trip tracking for 12 months</li>
+          <li>FY reports, purpose prompts, multi-vehicle</li>
+          <li>One payment · cancel auto-renew any time</li>
+        </ul>
+      </div>
+
+      <div class="plan">
+        <div class="plan-head">
+          <p class="plan-name">Monthly</p>
+          <span class="plan-badge" style="background:transparent;color:var(--muted);border:1px solid var(--border);">Flexible</span>
+        </div>
+        <div class="price-row"><span class="price">$6.99</span><span class="price-sub">/month</span></div>
+        <p class="plan-for">Same full product as Yearly — billed monthly. Cancel any time.</p>
+        <ul class="checklist">
+          <li>Year-round km + 12-week logbook included</li>
+          <li>FY reports &amp; deduction estimate at 88c/km</li>
+          <li>No long commitment</li>
+        </ul>
+      </div>
+
+      <div class="plan">
+        <div class="plan-head">
+          <p class="plan-name">Logbook Pass</p>
+        </div>
+        <div class="price-row"><span class="price">$19.99</span><span class="price-sub">once · 12 weeks only</span></div>
+        <p class="plan-for">For the ATO <strong>logbook method</strong> only — one continuous 12-week period. Not the same as Yearly; no year-round tracking.</p>
+        <ul class="checklist">
+          <li>12 weeks of active tracking</li>
+          <li>Logbook close-out &amp; business-use %</li>
+          <li>Upgrade to Monthly or Yearly anytime</li>
+        </ul>
+      </div>
+
+      <p class="price-note">All plans are tax-deductible business expenses. Cancel Monthly or Yearly auto-renew any time.</p>
+      <a class="btn btn-primary" href="mailto:aussielog.info@gmail.com?subject=Notify%20me%20when%20AussieLog%20launches">Get notified at launch →</a>
+      <div class="stores">
+        <span class="store-badge">
+          <span class="badge-soon">Coming soon</span>
+          <img src="badge-appstore.svg" alt="Download on the App Store" />
+        </span>
+        <span class="store-badge">
+          <span class="badge-soon">Coming soon</span>
+          <span class="gplay-badge">
+            <img src="badge-googleplay.svg" alt="" />
+            <span class="gplay-text">
+              <span class="gplay-sub">Get it on</span>
+              <span class="gplay-name">Google Play</span>
+            </span>
+          </span>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-brand"><img src="icon.png" alt="AussieLog" /> AussieLog</div>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="mailto:aussielog.info@gmail.com">Contact</a>
+    </div>
+    <p class="footer-note">Built for Australian sole traders, tradies and contractors.</p>
+    <p class="footer-note" style="margin-top:8px;">AussieLog is a record-keeping tool, not the ATO, not tax advice, and not a guarantee that any claim will be accepted. You are responsible for the accuracy of your trips, purposes and filings.</p>
+  </footer>
+
+</div>
+</body>
+</html>

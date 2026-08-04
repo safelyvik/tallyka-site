@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trip route | Tallyka</title>
+<meta name="description" content="View a route recorded with Tallyka. The route travels inside the link and is decoded in your browser." />
+<!-- The route lives in the URL fragment, so there is nothing here worth
+     indexing and a shared link should never end up in search results. -->
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/png" href="icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous" />
+<style>
+  :root {
+    --bg: #DDDDD5;
+    --card: #E8E8E2;
+    --border: #C0C0B7;
+    --muted: #635F57;
+    --fg: #080807;
+    --business: #080807;
+    --personal: #BC2F2F;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+  }
+  h1, h2 { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; letter-spacing: -0.02em; margin: 0; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    background: rgba(221, 221, 213, 0.9);
+    backdrop-filter: blur(8px);
+    flex: 0 0 auto;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; width: 100%; padding: 0 20px; }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 20px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: -0.01em; color: var(--fg); text-decoration: none; }
+  .brand img { width: 26px; height: 26px; border-radius: 7px; }
+
+  .chip {
+    display: inline-flex; align-items: center;
+    border-radius: 999px; padding: 4px 11px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: #fff; background: var(--business);
+  }
+  .chip.personal { background: var(--personal); }
+
+  .meta { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; padding: 0 20px 14px; }
+  .meta .km { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 26px; line-height: 1; }
+  .meta .km span { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+  .meta .date { font-size: 14px; color: var(--muted); }
+
+  #map { flex: 1 1 auto; min-height: 260px; background: var(--bg); }
+  .leaflet-control-attribution {
+    background: rgba(232, 232, 226, 0.85) !important;
+    color: var(--muted) !important;
+    font-size: 10px !important;
+  }
+  .leaflet-control-attribution a { color: var(--muted) !important; }
+  .tiles { filter: grayscale(0.25) contrast(0.95); }
+
+  footer { flex: 0 0 auto; border-top: 1px solid var(--border); }
+  .note { padding: 12px 20px 16px; font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .note strong { color: var(--fg); font-weight: 600; }
+  .note a { color: var(--fg); }
+
+  .empty { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
+  .empty h2 { font-size: 20px; margin-bottom: 8px; }
+  .empty p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; max-width: 34ch; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html"><img src="icon.png" alt="" />Tallyka</a>
+    <span id="chip" class="chip" hidden>Business</span>
+  </div>
+  <div class="wrap meta" id="meta" hidden>
+    <p class="km" id="km">0.0<span>km</span></p>
+    <p class="date" id="date"></p>
+  </div>
+</header>
+
+<div id="map" hidden></div>
+
+<div class="empty" id="empty">
+  <div>
+    <h2>No route in this link</h2>
+    <p id="emptyText">Open a route link from an Tallyka report to see the drive on a map.</p>
+  </div>
+</div>
+
+<footer>
+  <p class="wrap note">
+    <strong>This route never left your device.</strong> It is encoded after the
+    <code>#</code> in the link, and browsers never send that part to a server.
+    It was decoded here in your browser, not looked up in an account.
+    Map tiles &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
+  </p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+        crossorigin="anonymous"></script>
+<script>
+(function () {
+  "use strict";
+
+  // --- polyline5 decoder (Google's algorithm) -----------------------------
+  // The encoder lives in the app at src/lib/route-link.ts. This page is static
+  // and cannot import from the app bundle, so the decoder is inlined here.
+  function decodePolyline5(str) {
+    var points = [], index = 0, lat = 0, lng = 0;
+    while (index < str.length) {
+      var result = 0, shift = 0, b;
+      do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+      result = 0; shift = 0;
+      do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+      points.push([lat / 1e5, lng / 1e5]);
+    }
+    return points;
+  }
+
+  function fromBase64Url(s) {
+    var b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return atob(b64);
+  }
+
+  function showEmpty(message) {
+    if (message) document.getElementById("emptyText").textContent = message;
+    document.getElementById("empty").hidden = false;
+  }
+
+  var params = new URLSearchParams(location.hash.replace(/^#/, ""));
+  if (!params.get("p")) { showEmpty(); return; }
+
+  var points;
+  try {
+    points = decodePolyline5(fromBase64Url(params.get("p")));
+  } catch (err) {
+    showEmpty("This link looks incomplete. Copy the whole link, including everything after the #, and try again.");
+    return;
+  }
+  if (!points.length) { showEmpty(); return; }
+
+  // --- header -------------------------------------------------------------
+  var personal = params.get("c") === "p";
+  var chip = document.getElementById("chip");
+  chip.textContent = personal ? "Personal" : "Business";
+  chip.className = "chip" + (personal ? " personal" : "");
+  chip.hidden = false;
+
+  var km = parseFloat(params.get("k"));
+  if (isFinite(km)) document.getElementById("km").innerHTML = km.toFixed(1) + "<span>km</span>";
+
+  var iso = params.get("d");
+  if (iso) {
+    var d = new Date(iso + "T00:00:00");
+    if (!isNaN(d.getTime())) {
+      document.getElementById("date").textContent =
+        d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    }
+  }
+  document.getElementById("meta").hidden = false;
+
+  // --- map ----------------------------------------------------------------
+  document.getElementById("empty").hidden = true;
+  document.getElementById("map").hidden = false;
+
+  var map = L.map("map", { zoomControl: true, attributionControl: true });
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+    className: "tiles"
+  }).addTo(map);
+
+  // Same two-pass treatment as the live trip screen: an ink casing under a
+  // bone line, so the route stays legible over pale and dark tiles alike.
+  L.polyline(points, { color: "#080807", weight: 7, opacity: 0.45, lineCap: "round", lineJoin: "round" }).addTo(map);
+  L.polyline(points, { color: "#DDDDD5", weight: 4, opacity: 1, lineCap: "round", lineJoin: "round" }).addTo(map);
+
+  function dot(fill, ring) {
+    return L.divIcon({
+      className: "",
+      html: '<div style="width:16px;height:16px;border-radius:50%;background:' + fill +
+            ';border:3px solid ' + ring + ';box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    });
+  }
+  L.marker(points[0], { icon: dot("#FFFFFF", "#080807"), title: "Start" }).addTo(map);
+  L.marker(points[points.length - 1], { icon: dot("#080807", "#FFFFFF"), title: "End" }).addTo(map);
+
+  // Leaflet measures the container once, at construction. #map is a flex child
+  // that only reaches its real size after the header has laid out (and again
+  // once the webfonts swap in and change the header's height), so a plain
+  // fitBounds here framed the route for a container a third of the final size
+  // and left the line off-screen. Re-measure, then frame.
+  var bounds = L.latLngBounds(points);
+  function frame() {
+    map.invalidateSize({ animate: false });
+    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+  }
+  frame();
+  requestAnimationFrame(frame);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(frame);
+
+  // Re-frame on rotate/resize, but stop as soon as the reader has zoomed or
+  // panned: after that the view is theirs, and yanking it back is worse than
+  // a slightly off-centre route.
+  var touched = false;
+  map.on("zoomstart dragstart", function () { touched = true; });
+  window.addEventListener("resize", function () {
+    if (touched) map.invalidateSize({ animate: false });
+    else frame();
+  });
+})();
+</script>
+
+</body>
+</html>

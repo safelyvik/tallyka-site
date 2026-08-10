@@ -105,7 +105,10 @@
     <span id="chip" class="chip" hidden>Business</span>
   </div>
   <div class="wrap meta" id="meta" hidden>
-    <p class="km" id="km">0.0<span>km</span></p>
+    <!-- Dash, not 0.0: this is the placeholder shown when the link carries no
+         readable distance, and "0.0 km" is a claim about a trip rather than an
+         admission that we don't know. -->
+    <p class="km" id="km">&mdash;</p>
     <p class="date" id="date"></p>
   </div>
 </header>
@@ -182,8 +185,15 @@
   chip.className = "chip" + (personal ? " personal" : "");
   chip.hidden = false;
 
+  // The distance is whatever the app MEASURED during the drive and put in the
+  // link — never re-derived from the polyline below. That polyline is
+  // simplified for transport (and re-simplified again on long trips), so
+  // measuring it would quietly under-report the further you drove. Left as a
+  // dash if the link carries no readable value.
   var km = parseFloat(params.get("k"));
-  if (isFinite(km)) document.getElementById("km").innerHTML = km.toFixed(1) + "<span>km</span>";
+  if (isFinite(km) && km >= 0) {
+    document.getElementById("km").innerHTML = km.toFixed(1) + "<span>km</span>";
+  }
 
   var iso = params.get("d");
   if (iso) {

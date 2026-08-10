@@ -64,7 +64,20 @@
   .meta .km span { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 3px; }
   .meta .date { font-size: 14px; color: var(--muted); }
 
-  #map { flex: 1 1 auto; min-height: 260px; background: var(--bg); }
+  /* --card, deliberately NOT --bg: the bone route line IS #DDDDD5, so a --bg
+     backdrop made the line invisible against it in the window before tiles
+     arrive, leaving only the faint casing — a grey squiggle floating on
+     nothing. One step darker keeps the route readable even with no tiles. */
+  #map { position: relative; flex: 1 1 auto; min-height: 260px; background: var(--card); }
+  /* Shown until the first tile paints. A shared route is usually opened on
+     mobile data from an email, so that window is real, not theoretical. */
+  #tiles-pending {
+    position: absolute; inset: 0; z-index: 400;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--muted); pointer-events: none;
+    background: var(--card); transition: opacity .3s ease;
+  }
+  #tiles-pending.done { opacity: 0; }
   .leaflet-control-attribution {
     background: rgba(232, 232, 226, 0.85) !important;
     color: var(--muted) !important;
@@ -97,7 +110,7 @@
   </div>
 </header>
 
-<div id="map" hidden></div>
+<div id="map" hidden><div id="tiles-pending">Loading map…</div></div>
 
 <div class="empty" id="empty">
   <div>
@@ -186,29 +199,185 @@
   document.getElementById("empty").hidden = true;
   document.getElementById("map").hidden = false;
 
-  var map = L.map("map", { zoomControl: true, attributionControl: true });
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  // A center/zoom is set HERE, at construction, not left to the fitBounds()
+  // down at `frame()`. Leaflet refuses to project anything until the map has a
+  // view, and a layer added before that gets its position computed against a
+  // default zoom. Paths and the arrows survived it by accident — both are
+  // rebuilt on later events (the SVG renderer reprojects, and drawArrows()
+  // re-runs on zoomend) — but the two endpoint markers are added exactly once,
+  // so they kept the bogus position forever and sat thousands of pixels
+  // off-screen. That is why Start and End were invisible on this page while
+  // being fine in the app. fitBounds still reframes properly a few lines down.
+  var map = L.map("map", { zoomControl: true, attributionControl: true })
+    .setView(points[0], 13);
+  var tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
     className: "tiles"
   }).addTo(map);
 
-  // Same two-pass treatment as the live trip screen: an ink casing under a
-  // bone line, so the route stays legible over pale and dark tiles alike.
-  L.polyline(points, { color: "#080807", weight: 7, opacity: 0.45, lineCap: "round", lineJoin: "round" }).addTo(map);
-  L.polyline(points, { color: "#DDDDD5", weight: 4, opacity: 1, lineCap: "round", lineJoin: "round" }).addTo(map);
+  // Drop the placeholder once real tiles are on screen. `load` fires per
+  // viewport-full, so the first one is the moment the map stops being blank.
+  var pending = document.getElementById("tiles-pending");
+  function tilesReady() { if (pending) pending.className = "done"; }
+  tiles.on("load", tilesReady);
+  // Belt and braces: if the tile server is unreachable the map is never going
+  // to fill in, and a placeholder that says "Loading map…" forever is worse
+  // than the bare route, which is still perfectly readable on the card
+  // background. Give up after 6s and show what we have.
+  setTimeout(tilesReady, 6000);
 
-  function dot(fill, ring) {
+  // An ink casing under a bone line, so the route stays legible over pale and
+  // dark tiles alike — the same two-pass treatment as the live trip screen.
+  //
+  // Weights scale with zoom. At the zoom a 50 km trip frames at, a 7/4 pair
+  // leaves ~1.5px of casing either side, which antialiases into one flat grey
+  // stroke and throws away the contrast the casing exists to provide. And the
+  // casing runs at full opacity, not 0.45: at low zoom the faded version was
+  // the ONLY thing visible before tiles loaded, because the bone line matches
+  // the backdrop almost exactly.
+  var casing = L.polyline(points, { color: "#080807", opacity: 0.9, lineCap: "round", lineJoin: "round" }).addTo(map);
+  var line = L.polyline(points, { color: "#DDDDD5", opacity: 1, lineCap: "round", lineJoin: "round" }).addTo(map);
+
+  function weightForZoom() {
+    var z = map.getZoom();
+    if (z >= 15) return [7, 4];   // street level — the original pair
+    if (z >= 12) return [8, 4];   // suburb
+    return [9, 4];                // whole-city: widen the casing, not the line
+  }
+  function restyle() {
+    var w = weightForZoom();
+    casing.setStyle({ weight: w[0] });
+    line.setStyle({ weight: w[1] });
+  }
+  map.on("zoomend", restyle);
+  restyle();
+
+  // Start and end say "Start" and "End", in words, always visible.
+  //
+  // They used to differ only by swapping fill and ring colour, with the words
+  // hidden in the marker's `title` — a hover tooltip. This page is opened
+  // almost entirely from a phone, out of a PDF share sheet or an email, and
+  // touch has no hover, so the only thing distinguishing them was invisible on
+  // the one device that matters. Lettered A/B pins were the next attempt and
+  // were no better: nothing on the page says what A and B mean, and a reader
+  // who has never seen this app has no reason to guess A comes first.
+  //
+  // A word costs a few pixels and needs no legend, no key, and no prior
+  // familiarity with the product. The arrows below carry direction; these two
+  // just have to say which end is which.
+  function endpointIcon(label) {
+    var isStart = label === "Start";
     return L.divIcon({
       className: "",
-      html: '<div style="width:16px;height:16px;border-radius:50%;background:' + fill +
-            ';border:3px solid ' + ring + ';box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8]
+      html:
+        '<div style="display:flex;flex-direction:column;align-items:center;gap:3px">' +
+          '<div style="width:16px;height:16px;border-radius:50%;background:' +
+            (isStart ? "#080807" : "#fff") + ';border:3px solid ' +
+            (isStart ? "#fff" : "#080807") +
+            ';box-shadow:0 2px 6px rgba(0,0,0,0.35)"></div>' +
+          '<span style="font:700 10px/1 Inter,system-ui,sans-serif;color:#080807;' +
+            'background:rgba(232,232,226,0.92);padding:3px 6px;border-radius:5px;' +
+            'white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.2)">' + label + "</span>" +
+        "</div>",
+      iconSize: [54, 38],
+      iconAnchor: [27, 11]
     });
   }
-  L.marker(points[0], { icon: dot("#FFFFFF", "#080807"), title: "Start" }).addTo(map);
-  L.marker(points[points.length - 1], { icon: dot("#080807", "#FFFFFF"), title: "End" }).addTo(map);
+  // Rebuilt on every zoom, exactly like the arrows below.
+  //
+  // Added once with plain .addTo(map), these two ended up ~16x (four zoom
+  // levels) further apart than the route they belonged to and sat thousands of
+  // pixels off-screen — which is why Start/End were invisible on this page
+  // while rendering fine in the app. The polyline and the arrows never showed
+  // it: the SVG renderer reprojects paths on its own, and drawArrows() already
+  // re-created its markers on zoomend. Doing the same here puts the endpoints
+  // on that same known-good path instead of trusting a one-shot placement.
+  var endpointLayer = L.layerGroup().addTo(map);
+  function drawEndpoints() {
+    endpointLayer.clearLayers();
+    if (points.length < 1) return;
+    endpointLayer.addLayer(L.marker(points[0], { icon: endpointIcon("Start"), title: "Start" }));
+    endpointLayer.addLayer(
+      L.marker(points[points.length - 1], { icon: endpointIcon("End"), title: "End" })
+    );
+  }
+
+  // Direction arrows along the path.
+  //
+  // Without these a route is just a shape: you can see where the driving
+  // happened but not which way it went, and an out-and-back trip on the same
+  // road is completely ambiguous. Spaced by CUMULATIVE DISTANCE rather than by
+  // point index, because RDP leaves points bunched at corners and sparse on
+  // straights — indexing by point would cluster every arrow on the roundabouts.
+  function bearingDeg(a, b) {
+    // Screen bearing, not great-circle: these rotate a flat glyph on a flat
+    // map, so the small-angle planar approximation is exactly right here.
+    var dLng = (b[1] - a[1]) * Math.cos((a[0] * Math.PI) / 180);
+    var dLat = b[0] - a[0];
+    return (Math.atan2(dLng, dLat) * 180) / Math.PI;
+  }
+
+  function arrowIcon(deg) {
+    return L.divIcon({
+      className: "",
+      html:
+        '<div style="width:18px;height:18px;transform:rotate(' + deg + 'deg)">' +
+          '<svg viewBox="0 0 18 18" width="18" height="18">' +
+            '<path d="M9 2.5 L14 13 L9 10.2 L4 13 Z" fill="#080807" ' +
+              'stroke="#DDDDD5" stroke-width="1.4" stroke-linejoin="round"/>' +
+          "</svg>" +
+        "</div>",
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+  }
+
+  var arrowLayer = L.layerGroup().addTo(map);
+
+  function drawArrows() {
+    arrowLayer.clearLayers();
+    if (points.length < 2) return;
+
+    // Segment lengths in degrees-ish; only their RATIO matters for spacing.
+    var segs = [];
+    var total = 0;
+    for (var i = 1; i < points.length; i++) {
+      var dLat = points[i][0] - points[i - 1][0];
+      var dLng = (points[i][1] - points[i - 1][1]) *
+        Math.cos((points[i][0] * Math.PI) / 180);
+      var d = Math.sqrt(dLat * dLat + dLng * dLng);
+      segs.push(d);
+      total += d;
+    }
+    if (total === 0) return;
+
+    // Enough to read direction at a glance, few enough not to bury the route.
+    // Scales a little with zoom: a city-wide view needs fewer than a street one.
+    var count = map.getZoom() >= 14 ? 8 : 5;
+    var step = total / (count + 1);
+    var target = step;
+    var walked = 0;
+
+    for (var s = 0; s < segs.length && target < total; s++) {
+      while (target >= walked && target < walked + segs[s]) {
+        var t = segs[s] === 0 ? 0 : (target - walked) / segs[s];
+        var a = points[s];
+        var b = points[s + 1];
+        var pos = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        arrowLayer.addLayer(
+          L.marker(pos, { icon: arrowIcon(bearingDeg(a, b)), interactive: false })
+        );
+        target += step;
+      }
+      walked += segs[s];
+    }
+  }
+
+  drawArrows();
+  drawEndpoints();
+  map.on("zoomend", drawArrows);
+  map.on("zoomend", drawEndpoints);
 
   // Leaflet measures the container once, at construction. #map is a flex child
   // that only reaches its real size after the header has laid out (and again
@@ -219,6 +388,11 @@
   function frame() {
     map.invalidateSize({ animate: false });
     map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+    // fitBounds may land on the zoom the map is already at, in which case no
+    // zoomend fires and the redraws above never run. Call them directly so the
+    // endpoints and arrows are correct even on that no-op path.
+    drawEndpoints();
+    drawArrows();
   }
   frame();
   requestAnimationFrame(frame);

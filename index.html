@@ -17,35 +17,68 @@
 <style>
   :root {
     --bg: #DDDDD5;
+    --bg-rgb: 221, 221, 213;
     --bg-alt: #E4E3DD;
     --card: #E8E8E2;
     --border: #C0C0B7;
     --muted: #635F57;
     --fg: #080807;
+    --fg-rgb: 8, 8, 7;
     --primary: #080807;
     --primary-hover: #2a2a27;
     --destructive: #A6342A;
   }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #18170F;
+      --bg-rgb: 24, 23, 15;
+      --bg-alt: #201F16;
+      --card: #23221A;
+      --border: #3B3929;
+      --muted: #A9A08C;
+      --fg: #F3F1E6;
+      --fg-rgb: 243, 241, 230;
+      --primary: #F3F1E6;
+      --primary-hover: #DCD9C9;
+      --destructive: #E27E6E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #18170F;
+    --bg-rgb: 24, 23, 15;
+    --bg-alt: #201F16;
+    --card: #23221A;
+    --border: #3B3929;
+    --muted: #A9A08C;
+    --fg: #F3F1E6;
+    --fg-rgb: 243, 241, 230;
+    --primary: #F3F1E6;
+    --primary-hover: #DCD9C9;
+    --destructive: #E27E6E;
+  }
   * { box-sizing: border-box; }
+  html { background: var(--bg); }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--fg);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
+    position: relative;
   }
   h1, h2, h3 { font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif; }
-  .wrap { max-width: 480px; margin: 0 auto; padding: 0 24px; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
   nav {
     position: sticky; top: 0; z-index: 50;
-    background: rgba(221, 221, 213, 0.85);
+    background: rgba(var(--bg-rgb), 0.85);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--border);
   }
   nav .wrap { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; }
   .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px; letter-spacing: -0.01em; font-family: 'Space Grotesk', sans-serif; }
-  .brand img { width: 26px; height: 26px; border-radius: 7px; }
-  .nav-link { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .brand img { width: 26px; height: 26px; border-radius: 7px; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1); }
+  .brand:hover img { transform: rotate(8deg) scale(1.1); }
+  .nav-link { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
   .nav-link:hover { color: var(--fg); }
 
   .badge {
@@ -53,7 +86,9 @@
     background: var(--card); border: 1px solid var(--border);
     border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--fg);
     margin-bottom: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
   }
+  .badge:hover { transform: translateY(-1px); box-shadow: 0 4px 10px -4px rgba(8,8,7,0.25); }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
 
   h1 { font-size: 38px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
@@ -65,42 +100,67 @@
     width: 100%; padding: 16px; border-radius: 12px; font-weight: 600; font-size: 15px;
     text-decoration: none; border: none; cursor: pointer;
   }
-  .btn-primary { background: var(--primary); color: var(--card); }
-  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-primary {
+    background: var(--primary); color: var(--card);
+    box-shadow: 0 1px 2px rgba(8,8,7,0.1);
+    transition: background 0.2s, transform 0.2s cubic-bezier(.2,.8,.2,1), box-shadow 0.2s;
+  }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 12px 24px -8px rgba(8,8,7,0.4); }
+  .btn-primary:active { transform: translateY(0); box-shadow: 0 2px 6px -2px rgba(8,8,7,0.3); }
   .fine { text-align: center; font-size: 12px; color: var(--muted); margin-top: 10px; }
 
   section { padding: 64px 0 0; }
   .card {
     background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+    box-shadow: 0 1px 2px rgba(8,8,7,0.04);
   }
-  .demo-card { position: relative; }
+  .demo-card { position: relative; transition: transform 0.3s cubic-bezier(.2,.8,.2,1), box-shadow 0.3s; }
+  .demo-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -12px rgba(8,8,7,0.18); }
   .demo-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
   .demo-time { font-size: 12px; color: var(--muted); margin: 0 0 2px; }
   .demo-route { font-weight: 600; margin: 0; }
-  .pill { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--fg); white-space: nowrap; }
+  .pill { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--fg); white-space: nowrap; transition: transform 0.2s; }
+  .demo-card:hover .pill { transform: scale(1.06); }
   .demo-meta { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 16px; flex-wrap: wrap; }
   .demo-meta .accent { color: var(--fg); font-weight: 600; }
   .swipe-row { display: flex; gap: 8px; }
-  .swipe-btn { flex: 1; text-align: center; border-radius: 10px; padding: 9px; font-size: 12px; font-weight: 700; }
+  .swipe-btn { flex: 1; text-align: center; border-radius: 10px; padding: 9px; font-size: 12px; font-weight: 700; transition: transform 0.2s, box-shadow 0.2s; }
   .swipe-personal { background: var(--bg); border: 1px solid var(--border); color: var(--destructive); }
   .swipe-business { background: var(--bg); border: 1px solid var(--border); color: var(--fg); }
+  .swipe-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px -6px rgba(8,8,7,0.25); }
   .swipe-hint { text-align: center; font-size: 12px; color: var(--muted); margin: 12px 0 0; }
 
   h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
   .sub { color: var(--muted); margin: 0 0 28px; }
   .feature-grid { display: grid; gap: 12px; }
-  .feature { display: flex; gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-  .feature .icon { width: 44px; height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .feature {
+    display: flex; gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+    box-shadow: 0 1px 2px rgba(8,8,7,0.04);
+    transition: transform 0.3s cubic-bezier(.2,.8,.2,1), box-shadow 0.3s cubic-bezier(.2,.8,.2,1), border-color 0.3s;
+  }
+  .feature:hover { transform: translateY(-3px); box-shadow: 0 14px 28px -10px rgba(8,8,7,0.2); border-color: var(--fg); }
+  .feature .icon { width: 44px; height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), background 0.3s, border-color 0.3s; }
+  .feature:hover .icon { transform: scale(1.12) rotate(-6deg); background: var(--fg); border-color: var(--fg); }
+  .feature:hover .icon svg path { fill: var(--card); }
   .feature .title { font-weight: 600; font-size: 14px; margin: 0 0 3px; }
   .feature .desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0; }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.2,.8,.2,1); }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
 
   .pricing { text-align: center; }
   .pricing-intro { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 18px; }
   .plan {
     text-align: left; border: 1px solid var(--border); border-radius: 14px;
     padding: 16px; margin: 0 0 12px; background: var(--bg);
+    transition: transform 0.3s cubic-bezier(.2,.8,.2,1), box-shadow 0.3s cubic-bezier(.2,.8,.2,1), border-color 0.3s;
   }
-  .plan-primary { border: 2px solid var(--fg); background: var(--card); }
+  .plan:hover { transform: translateY(-4px); box-shadow: 0 16px 30px -12px rgba(8,8,7,0.22); border-color: var(--fg); }
+  .plan-primary { border: 2px solid var(--fg); background: var(--card); box-shadow: 0 6px 16px -8px rgba(8,8,7,0.16); }
+  .plan-primary:hover { box-shadow: 0 20px 36px -12px rgba(8,8,7,0.28); }
   .plan-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
   .plan-name { font-weight: 700; font-size: 14px; margin: 0; }
   .plan-badge {
@@ -120,10 +180,13 @@
   ul.checklist li::before { content: "✓"; color: var(--fg); font-weight: 800; flex-shrink: 0; }
 
   .stores { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; align-items: center; }
-  .store-badge { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+  .store-badge { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 6px; transition: transform 0.25s cubic-bezier(.2,.8,.2,1); }
+  .store-badge:hover { transform: translateY(-3px); }
   .store-badge .badge-soon { font-size: 10px; color: var(--muted); }
-  .store-badge img { height: 40px; display: block; opacity: 0.7; }
-  .gplay-badge { display: inline-flex; align-items: center; gap: 10px; background: #000; border-radius: 8px; padding: 8px 14px; height: 40px; box-sizing: border-box; opacity: 0.7; }
+  .store-badge img { height: 40px; display: block; opacity: 0.7; transition: opacity 0.2s; }
+  .store-badge:hover img { opacity: 0.95; }
+  .gplay-badge { display: inline-flex; align-items: center; gap: 10px; background: #000; border-radius: 8px; padding: 8px 14px; height: 40px; box-sizing: border-box; opacity: 0.7; transition: opacity 0.2s; }
+  .store-badge:hover .gplay-badge { opacity: 0.95; }
   .gplay-badge img { height: 22px; width: auto; }
   .gplay-badge .gplay-text { text-align: left; line-height: 1.2; }
   .gplay-badge .gplay-sub { font-size: 9px; color: #ccc; display: block; }
@@ -136,6 +199,52 @@
   .footer-links a { color: var(--muted); font-size: 13px; text-decoration: none; }
   .footer-links a:hover { color: var(--fg); }
   .footer-note { font-size: 12px; color: var(--muted); line-height: 1.6; max-width: 360px; margin: 0 auto; }
+
+  /* Wide-viewport atmosphere — the layout is a deliberately narrow, phone-width
+     reading column (this is an app teaser, not a desktop dashboard), but on a
+     real monitor that leaves most of the frame as flat, textureless ground.
+     Two quiet off-axis glows plus a faint route line give it depth without
+     competing with the column; both stay inert on the phone widths most
+     visitors will actually use. */
+  @media (min-width: 860px) {
+    .wrap { max-width: 560px; }
+    body::before {
+      content: "";
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(560px 420px at 12% 8%, rgba(var(--fg-rgb), 0.05), transparent 65%),
+        radial-gradient(640px 520px at 92% 78%, rgba(var(--fg-rgb), 0.045), transparent 60%);
+    }
+    body::after {
+      content: "";
+      position: fixed; top: 12%; right: 6%; z-index: 0; pointer-events: none;
+      width: 30vw; height: 60vh; max-width: 420px;
+      background-image: radial-gradient(rgba(var(--fg-rgb), 0.16) 1.6px, transparent 1.6px);
+      background-size: 30px 30px;
+      -webkit-mask-image: linear-gradient(200deg, #000 0%, transparent 55%);
+      mask-image: linear-gradient(200deg, #000 0%, transparent 55%);
+      opacity: 0.5;
+    }
+  }
+  @media (min-width: 860px) and (prefers-reduced-motion: no-preference) {
+    body::after { transition: opacity 0.4s; }
+  }
+
+  /* Cursor trail — echoes the logo's arrow + shrinking dot trail. Fine-pointer,
+     non-touch devices only; a synthetic cursor on a touchscreen has no meaning. */
+  @media (hover: hover) and (pointer: fine) {
+    body.tk-trail-on, body.tk-trail-on a, body.tk-trail-on button { cursor: none; }
+    .tk-cursor { position: fixed; top: 0; left: 0; z-index: 9999; pointer-events: none; will-change: transform; opacity: 0; transition: opacity 0.2s; }
+    .tk-cursor svg { display: block; filter: drop-shadow(0 2px 4px rgba(8,8,7,0.25)); }
+    .tk-trail-on .tk-cursor.is-active { opacity: 1; }
+    .tk-dot { position: fixed; top: 0; left: 0; z-index: 9998; pointer-events: none; border-radius: 50%; background: var(--fg); will-change: transform; opacity: 0; transition: opacity 0.2s; }
+    .tk-trail-on .tk-dot.is-active { opacity: 1; }
+    .tk-trail-on #tkDot2.is-active { opacity: 0.75; }
+    .tk-trail-on #tkDot3.is-active { opacity: 0.5; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tk-cursor, .tk-dot { display: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -158,7 +267,7 @@
   </section>
 
   <section>
-    <div class="card demo-card">
+    <div class="card demo-card reveal">
       <div class="demo-row">
         <div>
           <p class="demo-time">Today, 9:14 AM</p>
@@ -181,23 +290,23 @@
     <h2>Built for Australian sole traders</h2>
     <p class="sub">Tools for your logbook and cents-per-km records. You stay in control of accuracy.</p>
     <div class="feature-grid">
-      <div class="feature">
+      <div class="feature reveal" style="transition-delay:0ms;">
         <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>
-        <div><p class="title">88c/km deduction calculator</p><p class="desc">Estimate your claim under the ATO cents-per-kilometre method. The record you need every year, capped at 5,000 business km.</p></div>
+        <div><p class="title">Cents-per-km deduction calculator</p><p class="desc">Estimate your claim under the ATO cents-per-kilometre method — 88c/km for 2024–2025 and 2025–2026, 91c/km for 2026–2027. Updated automatically each year the ATO republishes the rate, capped at 5,000 business km.</p></div>
       </div>
-      <div class="feature">
+      <div class="feature reveal" style="transition-delay:60ms;">
         <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/></svg></div>
         <div><p class="title">12-week ATO logbook</p><p class="desc">Tracks your continuous 12-week logbook period with real-time progress, valid for 5 years once established.</p></div>
       </div>
-      <div class="feature">
+      <div class="feature reveal" style="transition-delay:120ms;">
         <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></div>
-        <div><p class="title">Simple trip tracking</p><p class="desc">Start and end each trip in one tap. Distance is calculated on your device. Your detailed location never leaves your phone.</p></div>
+        <div><p class="title">Simple trip tracking</p><p class="desc">Start and end each trip in one tap. Distance is calculated on your device, then snapped to real roads for accuracy. We store your route and trip summary — never a live location, and never when a trip isn't running.</p></div>
       </div>
-      <div class="feature">
+      <div class="feature reveal" style="transition-delay:180ms;">
         <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>
         <div><p class="title">Reports for your accountant</p><p class="desc">Generate a financial-year summary of business kilometres and your estimated deduction.</p></div>
       </div>
-      <div class="feature">
+      <div class="feature reveal" style="transition-delay:240ms;">
         <div class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#080807"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg></div>
         <div><p class="title">Business purpose prompts</p><p class="desc">Prompts you to record a specific work reason on business trips. You decide what to enter; you remain responsible for whether it is adequate for your claim.</p></div>
       </div>
@@ -210,7 +319,7 @@
       <h2 style="font-size:22px;margin-bottom:8px;">Pick the plan that matches your claim</h2>
       <p class="pricing-intro">Monthly and Yearly are the full app (year-round tracking <strong>and</strong> 12-week logbook). Logbook Pass is only for a one-off 12-week logbook, not a year of Tallyka.</p>
 
-      <div class="plan plan-primary">
+      <div class="plan plan-primary reveal" style="transition-delay:0ms;">
         <div class="plan-head">
           <p class="plan-name">Yearly</p>
           <span class="plan-badge">Best value</span>
@@ -225,7 +334,7 @@
         </ul>
       </div>
 
-      <div class="plan">
+      <div class="plan reveal" style="transition-delay:90ms;">
         <div class="plan-head">
           <p class="plan-name">Monthly</p>
           <span class="plan-badge" style="background:transparent;color:var(--muted);border:1px solid var(--border);">Flexible</span>
@@ -234,12 +343,12 @@
         <p class="plan-for">Same full product as Yearly, billed monthly. Cancel any time.</p>
         <ul class="checklist">
           <li>Year-round km + 12-week logbook included</li>
-          <li>FY reports &amp; deduction estimate at 88c/km</li>
+          <li>FY reports &amp; deduction estimate at the current ATO rate (91c/km for 2026–2027)</li>
           <li>No long commitment</li>
         </ul>
       </div>
 
-      <div class="plan">
+      <div class="plan reveal" style="transition-delay:180ms;">
         <div class="plan-head">
           <p class="plan-name">Logbook Pass</p>
         </div>
@@ -285,5 +394,101 @@
   </footer>
 
 </div>
+
+<div class="tk-cursor" id="tkCursor"><svg width="18" height="18" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11" fill="#080807"/></svg></div>
+<div class="tk-dot" id="tkDot1" style="width:8px;height:8px;"></div>
+<div class="tk-dot" id="tkDot2" style="width:6px;height:6px;"></div>
+<div class="tk-dot" id="tkDot3" style="width:4px;height:4px;"></div>
+
+<script>
+  // Cursor trail — arrow + shrinking dots chase the pointer with a lag,
+  // echoing the logo's own arrow-and-trail mark. Skipped entirely on
+  // touchscreens (no cursor to replace) and under prefers-reduced-motion.
+  (function () {
+    var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!canHover || reduceMotion) return;
+
+    document.body.classList.add('tk-trail-on');
+
+    var cursor = document.getElementById('tkCursor');
+    var dots = [document.getElementById('tkDot1'), document.getElementById('tkDot2'), document.getElementById('tkDot3')];
+    var nodes = [cursor].concat(dots);
+    var eases = [0.35, 0.28, 0.22, 0.16];
+    var sizes = [18, 8, 6, 4];
+    var pts = nodes.map(function () { return { x: 0, y: 0 }; });
+    var mouseX = 0, mouseY = 0, started = false, hot = false;
+
+    function show() {
+      cursor.classList.add('is-active');
+      dots.forEach(function (d) { d.classList.add('is-active'); });
+    }
+    function hide() {
+      cursor.classList.remove('is-active');
+      dots.forEach(function (d) { d.classList.remove('is-active'); });
+    }
+
+    window.addEventListener('mousemove', function (e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      if (!started) {
+        started = true;
+        pts.forEach(function (p) { p.x = mouseX; p.y = mouseY; });
+        show();
+      }
+    }, { passive: true });
+
+    document.documentElement.addEventListener('mouseleave', hide);
+    document.documentElement.addEventListener('mouseenter', function () { if (started) show(); });
+
+    var hotSelector = 'a, button, .btn, .feature, .plan, .card, .store-badge';
+    document.addEventListener('mouseover', function (e) {
+      if (e.target.closest && e.target.closest(hotSelector)) hot = true;
+    });
+    document.addEventListener('mouseout', function (e) {
+      if (!e.target.closest || !e.target.closest(hotSelector)) return;
+      var to = e.relatedTarget;
+      if (!to || !(to.closest && to.closest(hotSelector))) hot = false;
+    });
+
+    function tick() {
+      if (started) {
+        var targetX = mouseX, targetY = mouseY;
+        for (var i = 0; i < nodes.length; i++) {
+          var p = pts[i];
+          var ease = eases[i];
+          p.x += (targetX - p.x) * ease;
+          p.y += (targetY - p.y) * ease;
+          targetX = p.x;
+          targetY = p.y;
+          var half = sizes[i] / 2;
+          var scale = i === 0 && hot ? 1.3 : 1;
+          nodes[i].style.transform = 'translate3d(' + (p.x - half) + 'px,' + (p.y - half) + 'px,0) scale(' + scale + ')';
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+
+  // Fade-up reveal for cards as they scroll into view.
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!els.length) return;
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function (el) { el.classList.add('is-visible'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    els.forEach(function (el) { io.observe(el); });
+  })();
+</script>
 </body>
 </html>
